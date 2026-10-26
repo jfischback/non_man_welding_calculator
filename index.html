@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welding and Hot Work Calculator | OEMS</title>
+  <meta name="description" content="Scores welding and hot work fume exposure for non-routine work, using the OEMS Non-Manufacturing Welding and Hot Work Methodology v1.6.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="wrap topbar">
+    <div class="brand"><span class="mark" aria-hidden="true"></span>OEMS</div>
+    <div class="tag">Non-manufacturing exposure assessment</div>
+  </header>
+
+  <main class="wrap">
+    <section class="intro">
+      <p class="draft">v1.0 DRAFT</p>
+      <h1>Welding and Hot Work Calculator</h1>
+      <p class="lead">Use with the OEMS Non-Manufacturing Welding and Hot Work Procedure v1.6. Grinding afterwards, unknown coating smoke and skin contact are separate assessments.</p>
+      <p class="legend">
+        <span class="chip chip-entry">Yellow = enter or pick</span>
+        <span class="chip chip-calc">Green = calculated</span>
+      </p>
+      <p class="actions">
+        <button type="button" class="btn" id="loadExample">Load worked example</button>
+        <button type="button" class="btn ghost" id="clearAll">Clear all</button>
+      </p>
+    </section>
+
+    <form id="form" class="layout" autocomplete="off" novalidate>
+      <div class="main">
+        <!-- 01 Scenario -->
+        <section class="panel">
+          <h2><span class="num">01</span>Scenario</h2>
+          <div class="grid three">
+            <div class="field"><label class="name" for="assessmentId">Assessment ID</label><input class="entry" id="assessmentId" type="text"></div>
+            <div class="field"><label class="name" for="process">Process <span class="opt">(highest-fume process used)</span></label><select class="entry" id="process" data-list="process"></select></div>
+            <div class="field"><label class="name" for="baseMetal">Base metal</label><select class="entry" id="baseMetal" data-list="baseMetal"></select></div>
+            <div class="field"><label class="name" for="consumable">Consumable</label><input class="entry" id="consumable" type="text"></div>
+            <div class="field"><label class="name" for="shieldingGas">Shielding gas</label><input class="entry" id="shieldingGas" type="text"></div>
+            <div class="field"><label class="name" for="surface">Surface / coating</label><select class="entry" id="surface" data-list="surface"></select></div>
+            <div class="field"><label class="name" for="evaluator">Evaluator</label><input class="entry" id="evaluator" type="text"></div>
+            <div class="field"><label class="name" for="date">Date</label><input class="entry" id="date" type="date"></div>
+            <div class="field"><label class="name" for="location">Location / task</label><input class="entry" id="location" type="text"></div>
+            <div class="field full"><label class="name" for="sampling">Representative sampling data for this scenario?</label><select class="entry narrow" id="sampling" data-list="yesNo"></select></div>
+          </div>
+        </section>
+
+        <!-- 02 Gates -->
+        <section class="panel">
+          <h2><span class="num">02</span>Gates</h2>
+          <h3>Gate 1 — Constituents</h3>
+          <p class="hint">Limit to follow: Lowest available (the default) = the lowest limit from any source, including an ACGIH TLV entered here. Pick ACGIH to use the TLV on its own. Default order = ACGIH if entered, else OSHA, then NIOSH, then WEEL. A picked source with no value falls back to the lowest.</p>
+
+          <div class="row fixed">
+            <div class="row-head"><span class="row-name">Welding fume (whole)</span><span class="row-from">Always</span></div>
+            <div class="outs">
+              <div><span class="lbl">Limit used (mg/m³)</span><span class="calc">—</span></div>
+              <div class="wide"><span class="lbl">Limit source used</span><span class="calc">IARC Group 1 (OEMS selection)</span></div>
+              <div><span class="lbl">OSHA PEL (mg/m³)</span><span class="calc">—</span></div>
+              <div><span class="lbl">Hazard</span><span class="calc">5</span></div>
+              <div><span class="lbl">Risk</span><span class="calc" id="fumeRisk"></span></div>
+            </div>
+          </div>
+          <div id="rows"></div>
+
+          <div class="gates">
+            <div><span class="lbl">Gate 2 — regulated metal</span><span class="calc" id="gate2"></span></div>
+            <div><span class="lbl">Gate 3 — surface</span><span class="calc" id="gate3"></span></div>
+            <div><span class="lbl">Base metal — metals to list</span><span class="calc" id="baseList"></span></div>
+          </div>
+        </section>
+
+        <!-- 03 Factors -->
+        <section class="panel">
+          <h2><span class="num">03</span>Factors</h2>
+
+          <div class="factor">
+            <p class="fname">Process Fume generation</p>
+            <div class="fgrid">
+              <div><span class="lbl">Input</span><span class="calc" id="pfInput"></span></div>
+              <div><span class="lbl">Basis</span><select class="entry" id="pfBasis" data-list="basis"></select></div>
+              <div class="score"><span class="lbl">Score</span><span class="calc" id="pf"></span></div>
+            </div>
+            <div class="field sub"><label class="name" for="topCurrent">Top of normal current range, or large-diameter consumable?</label><select class="entry narrow" id="topCurrent" data-list="yesNo"></select></div>
+            <p class="check" id="pfCheck"></p>
+          </div>
+
+          <div class="factor">
+            <p class="fname">Exposure Potential</p>
+            <div class="fgrid">
+              <div><span class="lbl">Input</span><span class="calc plain">Fixed — metal fume is sub-micron</span></div>
+              <div><span class="lbl">Basis</span><span class="calc plain">—</span></div>
+              <div class="score"><span class="lbl">Score</span><span class="calc">5</span></div>
+            </div>
+          </div>
+
+          <div class="factor">
+            <p class="fname">Field Position</p>
+            <div class="fgrid">
+              <div><label class="lbl" for="field">Input</label><select class="entry" id="field" data-list="field"></select></div>
+              <div><label class="lbl" for="fieldBasis">Basis</label><select class="entry" id="fieldBasis" data-list="basis"></select></div>
+              <div class="score"><span class="lbl">Score</span><span class="calc" id="fp"></span></div>
+            </div>
+          </div>
+
+          <div class="factor">
+            <p class="fname">Room / General Ventilation</p>
+            <div class="fgrid">
+              <div><label class="lbl" for="room">Input</label><select class="entry" id="room" data-list="room"></select></div>
+              <div><label class="lbl" for="roomBasis">Basis</label><select class="entry" id="roomBasis" data-list="basis"></select></div>
+              <div class="score"><span class="lbl">Score</span><span class="calc" id="rm"></span></div>
+            </div>
+            <p class="check" id="roomCheck"></p>
+          </div>
+
+          <div class="factor">
+            <p class="fname">Environment</p>
+            <div class="fgrid">
+              <div class="span2"><span class="lbl">Input</span><span class="calc plain" id="envText"></span></div>
+              <div class="score"><span class="lbl">Score</span><span class="calc" id="en"></span></div>
+            </div>
+          </div>
+
+          <div class="factor">
+            <p class="fname">Duration <span class="opt">(time in the fume zone)</span></p>
+            <div class="fgrid">
+              <div><label class="lbl" for="duration">Input</label><select class="entry" id="duration" data-list="duration"></select></div>
+              <div><label class="lbl" for="durationBasis">Basis</label><select class="entry" id="durationBasis" data-list="basis"></select></div>
+              <div class="score"><span class="lbl">Score</span><span class="calc" id="d"></span></div>
+            </div>
+          </div>
+
+          <div class="factor total">
+            <p class="fname">Exposure Score</p>
+            <span class="calc big" id="es"></span>
+          </div>
+        </section>
+
+        <!-- 04 Controls -->
+        <section class="panel">
+          <h2><span class="num">04</span>Controls</h2>
+          <div class="grid two">
+            <div class="field"><label class="name" for="controlLevel">Control level in place</label><select class="entry" id="controlLevel" data-list="controls"></select></div>
+            <div class="field"><label class="name" for="controlType">Control type</label><select class="entry" id="controlType" data-list="controlType"></select></div>
+            <div class="field full"><label class="name" for="positioned">Positioned as required?</label><p class="hint">Arm or fume gun at the arc and moved with the work; work on the downdraft table with plume drawn away.</p><select class="entry narrow" id="positioned" data-list="positioned"></select></div>
+            <div class="field full"><label class="name" for="ppe">PPE worn <span class="opt">(recorded, never credited)</span></label><input class="entry" id="ppe" type="text"></div>
+            <div class="field full"><label class="name" for="admin">Administrative credit · confirmed by the evaluator</label><p class="hint">Yes only if: a written procedure for this task says how to do it and use the controls; the welders are trained on it; and you saw it followed or there is a record. Never by the AI. Adds 15% on top of the one engineering control in place. Job rotation, time limits, stand-back rules, signage, training alone and PPE do not count.</p><select class="entry" id="admin" data-list="admin" data-noblank></select></div>
+          </div>
+          <div class="outs controls">
+            <div><span class="lbl">Credited control level</span><span class="calc" id="level"></span></div>
+            <div><span class="lbl">Reduction</span><span class="calc" id="reduction"></span></div>
+            <div><span class="lbl">Residual</span><span class="calc" id="residual"></span></div>
+          </div>
+          <p class="check" id="controlNote"></p>
+        </section>
+      </div>
+
+      <!-- 05 Result -->
+      <section class="panel results" aria-live="polite">
+        <h2><span class="num">05</span>Result</h2>
+        <p class="pill" id="statusPill"></p>
+        <p class="small">Risk</p>
+        <p class="hero" id="risk">--</p>
+        <p class="small">Decision</p>
+        <p class="decision" id="decision">--</p>
+
+        <div class="field dark">
+          <label class="name" for="confidence">Confidence</label>
+          <select class="entry" id="confidence" data-list="confidence"></select>
+        </div>
+
+        <dl class="facts">
+          <div><dt>Tier</dt><dd class="calc" id="tier"></dd></div>
+          <div class="pair"><div><dt>Exposure Score</dt><dd class="calc" id="es2"></dd></div><div><dt>Residual</dt><dd class="calc" id="residual2"></dd></div><div><dt>Band</dt><dd class="calc" id="band"></dd></div></div>
+          <div><dt>Governing constituent</dt><dd class="calc" id="governing"></dd></div>
+          <div><dt>Band-sensitive?</dt><dd class="calc" id="sensitive"></dd></div>
+          <div><dt>Status</dt><dd class="calc" id="status"></dd></div>
+        </dl>
+      </section>
+
+      <!-- 06 Gases -->
+      <section class="panel gases">
+        <h2><span class="num">06</span>Gases <span class="opt">— screen, then route to direct-reading measurement (never scored)</span></h2>
+        <div id="gasRows"></div>
+      </section>
+    </form>
+
+    <footer class="foot">
+      <p><strong>This tool supports your professional judgment and does not replace it.</strong> Confidence and final decisions are made by a qualified evaluator.</p>
+      <p>Draft, pending qualified industrial hygiene review and adoption. Not a compliance determination, not a measurement, and not a substitute for required sampling.</p>
+      <p>Source: OEMS Welding and Hot Work Calculator v1.0 DRAFT; OEMS Non-Manufacturing Welding and Hot Work Exposure Assessment Methodology v1.6 and Procedure v1.6 (17 Oct 2026). Limits from the OEMS Chemical Library (14 Oct 2026).</p>
+    </footer>
+  </main>
+
+  <script src="data.js"></script>
+  <script src="calc.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
